@@ -3,11 +3,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yaml
 import argparse
+import logging
 parser = argparse.ArgumentParser(description='Dataset analysis script')
 parser.add_argument('Filename', type=str, help='Path to the configuration file')
+parser.add_argument('--verbose', '-v', action='store_true')
+parser.add_argument('--quiet', '-q', action='store_true')
 args = parser.parse_args()
 config_file=['user_config.yml']
 config={}
+if args.verbose:
+    logging_level = logging.INFO
+elif args.quiet:
+    logging_level = logging.ERROR
+else:
+    logging_level = logging.WARNING
+# Determine logging level based on arguments
+logging_level = logging.DEBUG if args.verbose else logging.WARNING
+
+# Initialize logging module
+logging.basicConfig(
+    level=logging_level, 
+    handlers=[logging.StreamHandler(), logging.FileHandler('my_python_analysis.log')],
+)
 # Load YAML config
 for this_config_file in config_file:
         with open(this_config_file, 'r') as file:
@@ -15,8 +32,13 @@ for this_config_file in config_file:
                 config.update(config)
 # Read the dataset path from config
 dataset_path = config['dataset']
-# Load the dataset
-shelter_data = pd.read_csv(dataset_path)
+try:
+     # Load the dataset
+    shelter_data = pd.read_csv(dataset_path)
+    logging.info(f'Successfully loaded {dataset_path}')
+except Exception as e:
+    logging.error('Error loading dataset', exc_info=e)
+    raise e
 #Column names info, dtypes of Occupancy_date is object, Each column's NaN count displays beside the column name
 shelter_data.info()
 #shape of the DataFrame
@@ -40,7 +62,11 @@ shelter_data['location_address'].value_counts()
 #Convert the data type of at least one of the columns. If all columns are typed correctly, convert one to `str` and back.
 shelter_data['shelter_id'].dtype
 # shelter_data['occupied_beds'] = pd.to_numeric(shelter_data['occupied_beds'], errors='coerce').astype('Int64')
-shelter_data['shelter_id'] = shelter_data['shelter_id'].astype('str')
+try:
+    shelter_data['shelter_id'] = shelter_data['shelter_id'].astype('str')
+except ValueError as e:
+    e.add_note(f"The column {shelter_data['shelter_id']} is not an integer")
+    raise
 shelter_data['shelter_id']
 #The Data type of the column shelter_id is Object
 shelter_data['shelter_id'].dtype
@@ -52,8 +78,9 @@ shelter_data_summary={}
 # Save to new dataset as defined in config
 shelter_data.to_excel('C:/Users/maild/Desktop/data/python_script/RAJASEKHAR_DELPHIN_python_assignment2_proc.xlsx', index=False)
 #Creating a new column month from the occupancy date
-shelter_data["month"] = shelter_data["occupancy_date"].dt.strftime("%b")
-shelter_data["month"]
+# Check if month values are between 1 and 12
+assert shelter_data["occupancy_date"].dt.month.between(1, 12).all(), "Month values should be between 1 and 12"
+shelter_data["month"]=shelter_data["occupancy_date"].dt.strftime("%b")
 #Creating a new column called Total Occupied and unoccupied rooms in total available rooms column
 shelter_data["total_available_rooms"] = (shelter_data["occupied_rooms"]+shelter_data["unoccupied_rooms"])
 shelter_data[["occupied_rooms", "unoccupied_rooms","total_available_rooms"]].head(10)
@@ -113,10 +140,11 @@ ax.set_ylabel(config['plot_config']['ylabel'])
 ax.set_axisbelow(True)
 ax.grid(alpha=0.5)
 fig
-plt.savefig('BS_HW-1(pdf).pdf')
+#plt.savefig('BS_HW-1(pdf).pdf')
 #Creating legend
 ax.legend([actual_room, funding_room],['Actual room', 'Funding room'],bbox_to_anchor=(1, 1),
           loc='lower left')
 plt.show()
 fig
+logging.info('Viewing Shelter dataset')
 

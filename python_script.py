@@ -1,8 +1,22 @@
 import pandas as pd
 #using `matplotlib`
 import matplotlib.pyplot as plt
-#Load the data to a single DataFrame.
-shelter_data=pd.read_csv(r'C:/Users/maild/Desktop/data/python_script/RAJASEKHAR_DELPHIN_python_assignment2_orig.csv')
+import yaml
+import argparse
+parser = argparse.ArgumentParser(description='Dataset analysis script')
+parser.add_argument('Filename', type=str, help='Path to the configuration file')
+args = parser.parse_args()
+config_file=['user_config.yml']
+config={}
+# Load YAML config
+for this_config_file in config_file:
+        with open(this_config_file, 'r') as file:
+                config = yaml.safe_load(file)
+                config.update(config)
+# Read the dataset path from config
+dataset_path = config['dataset']
+# Load the dataset
+shelter_data = pd.read_csv(dataset_path)
 #Column names info, dtypes of Occupancy_date is object, Each column's NaN count displays beside the column name
 shelter_data.info()
 #shape of the DataFrame
@@ -34,6 +48,8 @@ shelter_data['shelter_id'].dtype
 shelter_data['shelter_id'] = shelter_data['shelter_id'].astype('int')
 shelter_data['shelter_id'].dtype
 #Write the DataFrame to a different file format than the original.
+shelter_data_summary={}
+# Save to new dataset as defined in config
 shelter_data.to_excel('C:/Users/maild/Desktop/data/python_script/RAJASEKHAR_DELPHIN_python_assignment2_proc.xlsx', index=False)
 #Creating a new column month from the occupancy date
 shelter_data["month"] = shelter_data["occupancy_date"].dt.strftime("%b")
@@ -70,13 +86,12 @@ cleaned_shelter_data
 month_group=shelter_data.groupby("month")
 month_group["service_user_count"].mean()
 shelter_data.columns
-# Calculating group sums and standardizing using agg() 
+#  Calculating group sums and standardizing using agg() 
 shelter_data_summary = (shelter_data
-                 .groupby('month')
+                 .groupby(config['group_col'])
                  .agg(org_count=('organization_name', 'count'),
                       total_full_rooms=('occupied_rooms', 'sum'),
                       average_funding_bed=('capacity_funding_bed', 'mean')))
-
 shelter_data_summary.head()
 #Using plot()
 plt.plot(cleaned_shelter_data["capacity_actual_room"],cleaned_shelter_data["capacity_funding_room"])
@@ -90,15 +105,18 @@ actual_room = ax.scatter(cleaned_shelter_data['sector_name'],
            cleaned_shelter_data['capacity_actual_room'])
 funding_room = ax.scatter(cleaned_shelter_data['sector_name'],
            cleaned_shelter_data['capacity_funding_room'])
-plt.savefig('BS_HW-1.png')
+#plt.savefig('BS_HW-1.png')
 #Creating title,label and grid
-ax.set_title('Sectors Vs Actual/Funding Room')
-ax.set_xlabel('Sector names')
-ax.set_ylabel('Actual/Funding rooms')
+ax.set_title(config['plot_config']['title'])
+ax.set_xlabel(config['plot_config']['xlabel'])
+ax.set_ylabel(config['plot_config']['ylabel'])
 ax.set_axisbelow(True)
 ax.grid(alpha=0.5)
 fig
+plt.savefig('BS_HW-1(pdf).pdf')
 #Creating legend
 ax.legend([actual_room, funding_room],['Actual room', 'Funding room'],bbox_to_anchor=(1, 1),
-          loc='lower right')
+          loc='lower left')
+plt.show()
 fig
+

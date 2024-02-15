@@ -1,0 +1,16 @@
+# Opening the dataset
+dataset: 'C:/Users/maild/Desktop/data/python_script/RAJASEKHAR_DELPHIN_python_assignment2_orig.csv'
+
+#Configuration of plots
+
+plot_config:
+  title: 'Sectors Vs Actual/Funding Room'
+  xlabel: 'Sector names'
+  ylabel: 'Actual/Funding rooms'
+  
+
+group_col:
+  - 'month'
+
+
+

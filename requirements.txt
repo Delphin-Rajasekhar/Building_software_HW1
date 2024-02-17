@@ -1,4 +1,7 @@
 pytest
 pandas
 matplotlib
+yaml
+argparse
+logging
 

@@ -25,26 +25,33 @@ logging.basicConfig(
     level=logging_level, 
     handlers=[logging.StreamHandler(), logging.FileHandler('my_python_analysis.log')],
 )
+def load_data(dataset_path):
+    try:
+        # Load the dataset
+        shelter_data = pd.read_csv(dataset_path)
+        logging.info(f'Successfully loaded {dataset_path}')
+    except Exception as e:
+        logging.error('Error loading dataset', exc_info=e)
+        raise e
+    return shelter_data
+def rename_data(data_to_rename):
+     if data_to_rename is None:
+          raise ValueError('No columns found')
+     shelter_data=data_to_rename.rename(columns=str.lower)
+     return shelter_data
 # Load YAML config
 for this_config_file in config_file:
         with open(this_config_file, 'r') as file:
                 config = yaml.safe_load(file)
                 config.update(config)
 # Read the dataset path from config
-dataset_path = config['dataset']
-try:
-     # Load the dataset
-    shelter_data = pd.read_csv(dataset_path)
-    logging.info(f'Successfully loaded {dataset_path}')
-except Exception as e:
-    logging.error('Error loading dataset', exc_info=e)
-    raise e
+shelter_data = load_data(config['dataset'])
+shelter_data=rename_data(shelter_data)
 #Column names info, dtypes of Occupancy_date is object, Each column's NaN count displays beside the column name
 shelter_data.info()
 #shape of the DataFrame
 shelter_data.shape
 shelter_data.head()
-shelter_data=shelter_data.rename(columns=str.lower)
 #Summary statistics for the data.
 shelter_data.describe()  #For numeric columns: the max, min, mean, and median
 #For text columns:the most common value and unique values count
